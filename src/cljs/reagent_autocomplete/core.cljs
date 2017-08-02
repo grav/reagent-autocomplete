@@ -13,7 +13,7 @@
 
 (defn search [q]
   (js/console.log "Search '" q "'")
-  (js/Promise.resolve (->> ["Oleg" "Olga" "Nana" "Eva" "Malene" "Malene" "Jonas" "Lisbeth" "Mikkel" "Marianne"]
+  (js/Promise.resolve (->> ["Oleg" "Olga" "Nana" "Eva" "Malene" "Malene" "Jonas" "Marianne" "Lisbeth" "Mikkel" "Marianne"]
                            (filter #(clojure.string/starts-with? (clojure.string/lower-case %)
                                                                  (clojure.string/lower-case q)))
                            (map-indexed vector))))
