@@ -11,27 +11,42 @@
 (defonce app-state
          (reagent/atom {}))
 
+(defn search [q]
+  (js/console.log "Search '" q "'")
+  (js/Promise.resolve (->> ["Oleg" "Olga" "Nana" "Eva" "Malene" "Malene" "Jonas" "Lisbeth" "Mikkel" "Marianne"]
+                           (filter #(clojure.string/starts-with? (clojure.string/lower-case %)
+                                                                 (clojure.string/lower-case q)))
+                           (map-indexed vector))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Page
 
-(defn page [ratom]
-  (let [values ["Oleg" "Olga" "Nana" "Eva" "Malene" "Jonas" "Lisbeth" "Mikkel" "Marianne"]]
-    [:div {:style {:width 300}}
-     [auto/autocomplete {:values    values
-                         :value     (or (:value @ratom) "")
-                         :filter    (fn [v]
-                                      #(clojure.string/starts-with? (clojure.string/lower-case %)
-                                                                    (clojure.string/lower-case v)))
-                         :on-change (partial swap! ratom assoc :value)}]
+(defn page []
+  (let [delay 1000]
+    (fn [ratom]
+      (let [{:keys [values value]
+             :or   []} @ratom]
+        [:div {:style {:width 300}}
+         [auto/autocomplete {:values    values
+                             :value     value
+                             :format    last
+                             :on-change #(do (swap! ratom assoc :value %)
 
-     [:h3 "Possible values:"]
-     [:ul
-      (for [v values]
-        [:li {:key v} v])]
-     [:h3 "Selected value:"]
-     [:div (:value @ratom)]]))
+                                             (js/setTimeout (fn []
+                                                              (when (= (:value @ratom) %)
+                                                                (.then (search %)
+                                                                       (fn [es]
+                                                                         (swap! ratom assoc :values (->> es
+                                                                                                         (take 10)))))))
+                                                            delay))}
+          ]
+         [:h3 "Possible values:"]
+         [:ul
+          (for [v values]
+            [:li {:key v} (pr-str v)])]
+         [:h3 "Selected value:"]
+         [:div (pr-str (:value @ratom))]]))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

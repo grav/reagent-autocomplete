@@ -12,14 +12,12 @@
 
 (defn autocomplete []
   (let [state (reagent.core/atom nil)]
-    (fn [{:keys     [value values on-change style]
-          filter-fn :filter
-          :or {filter-fn (fn [v]
-                           #(clojure.string/starts-with? % v))}}]
+    (fn [{:keys     [value values on-change style delay]
+          format-fn :format
+          :or       {delay     1000
+                     format-fn identity}}]
       (let [{:keys [focus select input]} @state
-            {:keys [arrow-up arrow-down esc]} key-codes
-            vals (->> values
-                      (filter (filter-fn value)))]
+            {:keys [arrow-up arrow-down esc]} key-codes]
         [:div {:style   (merge {:width    "100%"
                                 :position :relative})
                :on-blur #(swap! state dissoc :focus)}
@@ -48,14 +46,14 @@
                                                                               (.focus input))
                                          (= (:esc key-codes) key-code) (.blur (.-target %))
                                          (= (:enter key-codes) key-code) (do
-                                                                           (on-change (get (vec vals) (.-selectedIndex (.-target %))))
+                                                                           (on-change (format-fn (get (vec values) (.-selectedIndex (.-target %)))))
                                                                            (.blur (.-target %)))))
                    :multiple    true
                    :on-focus    #(swap! state assoc :focus :dropdown)
                    :ref         #(swap! state assoc :select %)}
-          (for [v vals]
+          (for [v values]
             [:option {:key      v
                       :on-click #(do
-                                   (on-change (.-value (.-target %)))
+                                   (on-change (format-fn v))
                                    (.blur select))}
-             v])]]))))
+             (format-fn v)])]]))))
